@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
+import Image from 'next/image';
 
 export default function Callback() {
   const router = useRouter();
@@ -117,10 +118,12 @@ export default function Callback() {
           <div className="success-message" style={{ textAlign: 'center' }}>
             <h1>Welcome, {userProfile.display_name}!</h1>
             {userProfile.images?.[0]?.url && (
-              <img 
+              <Image 
                 src={userProfile.images[0].url} 
                 alt="Profile" 
-                style={{ width: '100px', height: '100px', borderRadius: '50%', margin: '20px auto', objectFit: 'cover' }}
+                width={100} // Specify width
+                height={100} // Specify height
+                style={{ borderRadius: '50%', margin: '20px auto', objectFit: 'cover' }}
               />
             )}
             <p>Email: {userProfile.email}</p>

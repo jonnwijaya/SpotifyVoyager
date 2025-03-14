@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { getSpotifyLoginUrl } from '@/lib/spotify';
 
-export async function GET(request) {
+export async function GET() {
   const loginUrl = getSpotifyLoginUrl();
   return redirect(loginUrl);
 }

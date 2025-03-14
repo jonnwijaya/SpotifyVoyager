@@ -8,7 +8,7 @@ import { getSpotifyLoginUrl } from '../lib/spotify';
 
 export default function Home() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [, setIsAuthenticated] = useState(false);
   
   useEffect(() => {
     const token = localStorage.getItem('spotifyAccessToken');
