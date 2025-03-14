@@ -1,13 +1,22 @@
 // app/layout.js
+import './globals.css'; // Import global CSS styles for the application
+
+// Define application metadata for SEO and browser tabs
 export const metadata = {
-  title: 'Spotify Voyager', // Title of the application
-  description: 'Discover and manage your music experience effortlessly.', // Description for SEO
+  title: 'Spotify Voyager', // Application title
+  description: 'Discover and manage your music experience effortlessly with Spotify integration.',
+  keywords: 'Spotify, music, playlists, tracks, discover', // Keywords for SEO
+  authors: [{ name: 'Your Name' }], // Author information
+  themeColor: '#1DB954', // Spotify green color
 };
 
+// Root layout component that wraps all pages
 export default function RootLayout({ children }) {
   return (
-    <html lang="en"> {/* Set the language of the document */}
-      <body>{children}</body> {/* Render child components here */}
+    <html lang="en"> {/* Set document language */}
+      <body className="bg-gray-50 min-h-screen"> {/* Set minimum height and background */}
+        {children} {/* Render child components/pages */}
+      </body>
     </html>
   );
 }
