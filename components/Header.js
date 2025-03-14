@@ -1,10 +1,10 @@
 // components/Header.js
-"use client"; // Mark as client component to use React hooks
+"use client";
 
-import { Fragment, useState, useEffect } from 'react'; // Import React hooks
-import Link from 'next/link'; // Import Next.js Link for client-side navigation
-import { Dialog, Transition } from '@headlessui/react'; // Import HeadlessUI components for UI elements
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'; // Import icons
+import { Fragment, useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Dialog, Transition } from '@headlessui/react';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 
 // Navigation links for the header
 const navigation = [

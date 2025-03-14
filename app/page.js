@@ -1,10 +1,10 @@
 // app/page.js
-"use client"; // Mark as client component since we use React hooks
+"use client";
 
-import { useState, useEffect } from 'react'; // Import React hooks
-import { useRouter } from 'next/navigation'; // Import Next.js router
-import Header from '@/components/Header'; // Import the Header component
-import { getSpotifyLoginUrl } from '@/lib/spotify'; // Import helper for Spotify login URL
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Header from '../components/Header'; // Use relative path
+import { getSpotifyLoginUrl } from '../lib/spotify'; // Use relative path
 
 export default function Home() {
   const router = useRouter(); // Initialize router for programmatic navigation

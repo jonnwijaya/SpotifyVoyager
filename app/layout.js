@@ -1,5 +1,5 @@
 // app/layout.js
-import './globals.css'; // Import global CSS styles for the application
+import './globals.css'; // Import CSS from the app directory, not from styles
 
 // Define application metadata for SEO and browser tabs
 export const metadata = {

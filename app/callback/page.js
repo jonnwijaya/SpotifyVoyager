@@ -1,9 +1,9 @@
 // app/callback/page.js
-"use client"; // Mark this as a client component for Next.js App Router
+"use client";
 
-import { useEffect, useState } from 'react'; // Import React hooks for state and side effects
-import { useRouter } from 'next/navigation'; // Import Next.js router for navigation
-import { supabase } from '@/lib/supabaseClient'; // Import our Supabase client
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../../lib/supabaseClient'; // Use relative path
 
 // Define the Callback component to handle Spotify authentication response
 export default function Callback() {
