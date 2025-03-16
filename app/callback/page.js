@@ -79,7 +79,7 @@ export default function Callback() {
     handleCallback();
 
     return () => clearInterval(progressInterval);
-  }, [router]);
+  }, [loading, router]);
 
   async function fetchUserProfile(accessToken) {
     try {
