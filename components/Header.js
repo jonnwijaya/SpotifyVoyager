@@ -15,13 +15,30 @@ const navigation = [
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   
   // Check authentication status on component mount
   useEffect(() => {
+    // Check if user is logged in
     const token = localStorage.getItem('spotifyAccessToken');
     const expiration = localStorage.getItem('tokenExpiration');
     
     setIsLoggedIn(token && expiration && parseInt(expiration) > Date.now());
+    
+    // Add scroll event listener for header styling
+    const handleScroll = () => {
+      const offset = window.scrollY;
+      if (offset > 50) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   // Toggle mobile menu
@@ -36,7 +53,10 @@ export default function Header() {
   };
   
   return (
-    <header className="site-header">
+    <header className={`site-header ${scrolled ? 'scrolled' : ''}`} style={{
+      backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 1)',
+      backdropFilter: scrolled ? 'blur(10px)' : 'none'
+    }}>
       <div className="header-inner">
         <div className="logo">
           <Link href="/">
@@ -58,26 +78,38 @@ export default function Header() {
               My Dashboard
             </Link>
           ) : (
-            <Link href="/api/auth/login">
-              Log in →
+            <Link href="/api/auth/login" className="btn btn-primary">
+              Connect with Spotify
             </Link>
           )}
         </nav>
         
         {/* Mobile menu button */}
-        <button className="menu-button" onClick={toggleMobileMenu}>
+        <button 
+          className="menu-button" 
+          onClick={toggleMobileMenu}
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+        >
           {mobileMenuOpen ? '✕' : '☰'}
         </button>
       </div>
       
       {/* Mobile menu overlay */}
-      <div className={`mobile-overlay ${mobileMenuOpen ? 'open' : ''}`} onClick={toggleMobileMenu}></div>
+      <div 
+        className={`mobile-overlay ${mobileMenuOpen ? 'open' : ''}`} 
+        onClick={toggleMobileMenu}
+        aria-hidden="true"
+      ></div>
       
       {/* Mobile menu */}
       <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="mobile-menu-header">
           <div className="logo-icon">SV</div>
-          <button className="close-menu" onClick={toggleMobileMenu}>✕</button>
+          <button 
+            className="close-menu" 
+            onClick={toggleMobileMenu}
+            aria-label="Close menu"
+          >✕</button>
         </div>
         
         <nav>
@@ -103,10 +135,10 @@ export default function Header() {
           ) : (
             <Link 
               href="/api/auth/login" 
-              className="mobile-menu-link"
+              className="mobile-menu-link btn btn-primary"
               onClick={toggleMobileMenu}
             >
-              Log in
+              Connect with Spotify
             </Link>
           )}
         </nav>
