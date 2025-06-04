@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { isAuthenticated, spotifyFetch } from '@/lib/spotify';
 import { getUserAnalytics } from '@/lib/analytics';
+import { generateReceiptData } from '@/lib/analytics';
 import { generatePersonalizedInsights } from '@/lib/aiService';
 import { checkSubscriptionStatus, SUBSCRIPTION_PLANS } from '@/lib/payments';
 import Image from 'next/image';
