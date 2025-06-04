@@ -11,12 +11,11 @@ import Image from 'next/image';
 
 export default function Dashboard() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
-  const [insights, setInsights] = useState(null);
-  const [subscription, setSubscription] = useState({ isPremium: false });
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [subscription, setSubscription] = useState({ isPremium: false });
+  const [generatingReceipt, setGeneratingReceipt] = useState(false);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -60,11 +59,14 @@ export default function Dashboard() {
 
   const generateReceipt = async () => {
     try {
-      const receiptData = await generateReceiptData();
-      // Navigate to receipt page or download
-      router.push(`/receipt/${receiptData.receiptId}`);
+      setGeneratingReceipt(true);
+      const receiptId = Math.random().toString(36).substring(7);
+      router.push(`/receipt/${receiptId}`);
     } catch (error) {
       console.error('Error generating receipt:', error);
+      setError('Failed to generate receipt');
+    } finally {
+      setGeneratingReceipt(false);
     }
   };
 
