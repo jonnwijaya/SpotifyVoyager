@@ -12,7 +12,9 @@ const nextConfig = {
     images: {
       domains: ['i.scdn.co'], // Add the allowed domains here
     },
+    env: {
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    },
   };
-  
+
   module.exports = nextConfig;
-  
