@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -125,53 +124,55 @@ export default function Dashboard() {
       <Header />
 
       <div className="dashboard-container">
-        {/* User Profile Card */}
+        {/* Profile Card */}
         <div className="card profile-card">
           <div className="user-profile-wrapper">
             <div className="profile-image-container">
               {analytics.profile?.images?.[0]?.url ? (
-                <Image 
-                  src={analytics.profile.images[0].url} 
-                  alt="Profile" 
+                <Image
+                  src={analytics.profile.images[0].url}
+                  alt="Profile"
                   width={100}
                   height={100}
                   className="profile-image"
                 />
               ) : (
                 <div className="profile-image-placeholder">
-                  <span>{analytics.profile?.display_name?.charAt(0) || '?'}</span>
+                  {analytics.profile?.display_name?.charAt(0) || 'U'}
                 </div>
               )}
             </div>
 
             <div className="profile-details">
-              <h1 className="profile-name">{analytics.profile?.display_name || 'Music Lover'}</h1>
+              <h1 className="profile-name">{analytics.profile?.display_name}</h1>
               <p className="profile-email">{analytics.profile?.email}</p>
 
               <div className="profile-stats">
-                <span className={`account-badge ${subscription.isPremium ? 'premium' : 'free'}`}>
-                  {subscription.isPremium ? 'Premium Member' : 'Free Account'}
-                </span>
-                <span className="music-personality">
-                  🎵 {insights?.musicPersonality || 'Music Explorer'}
-                </span>
+                <div className={`account-badge ${subscription.isPremium ? 'premium' : 'free'}`}>
+                  {subscription.isPremium ? 'Premium' : 'Free'}
+                </div>
+                <div className="followers-count">
+                  <span>👥</span>
+                  <span>{analytics.profile?.followers?.total || 0} followers</span>
+                </div>
               </div>
 
-              <div className="profile-actions">
-                <button onClick={generateReceipt} className="btn btn-primary">
-                  Generate Music DNA Card
+              <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+                <button 
+                  onClick={generateReceiptData}
+                  className="btn btn-primary"
+                  disabled={generatingReceipt}
+                >
+                  {generatingReceipt ? 'Generating...' : '🧬 Generate Music DNA'}
                 </button>
                 {!subscription.isPremium && (
                   <button 
                     onClick={() => router.push('/pricing')}
-                    className="btn btn-premium"
+                    className="btn btn-outline"
                   >
                     Upgrade to Premium
                   </button>
                 )}
-                <button onClick={handleLogout} className="btn btn-outline">
-                  Logout
-                </button>
               </div>
             </div>
           </div>

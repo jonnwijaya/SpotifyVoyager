@@ -2,76 +2,105 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { isAuthenticated } from '@/lib/spotify';
 import { getUserAnalytics } from '@/lib/analytics';
-import Image from 'next/image';
+import html2canvas from 'html2canvas';
 
-export default function MusicDNACard() {
-  const params = useParams();
+export default function MusicDNACard({ params }) {
+  const router = useRouter();
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function loadCardData() {
+    async function loadAnalytics() {
       try {
+        if (!isAuthenticated()) {
+          router.push('/');
+          return;
+        }
+
+        setLoading(true);
         const data = await getUserAnalytics();
         setAnalytics(data);
-      } catch (error) {
-        console.error('Error loading Music DNA Card:', error);
+      } catch (err) {
+        console.error('Error loading analytics:', err);
+        setError('Failed to load your music data');
       } finally {
         setLoading(false);
       }
     }
 
-    loadCardData();
-  }, []);
+    loadAnalytics();
+  }, [router]);
 
-  const downloadCard = () => {
-    const cardElement = document.getElementById('music-dna-card');
-    import('html2canvas').then(({ default: html2canvas }) => {
-      html2canvas(cardElement, {
-        backgroundColor: '#0a0a0a',
-        scale: 3,
-        width: 1080,
-        height: 1920,
-        useCORS: true
-      }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `music-dna-card-${Date.now()}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
+  const downloadCard = async () => {
+    try {
+      const element = document.getElementById('music-dna-card');
+      if (!element) return;
+
+      const canvas = await html2canvas(element, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true
       });
-    });
+
+      const link = document.createElement('a');
+      link.download = `music-dna-${params.id}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    } catch (error) {
+      console.error('Error downloading card:', error);
+    }
   };
 
-  const shareOnTwitter = () => {
-    const text = `Just discovered my Music DNA! 🧬🎵 I'm a ${analytics?.insights.musicMood?.mood} listener with ${analytics?.insights.topGenres[0]?.genre} vibes ✨`;
-    const url = window.location.href;
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
-  };
-
-  const shareOnInstagram = () => {
-    downloadCard();
-    alert('🎨 Your Music DNA Card is downloaded! Perfect for Instagram Stories - upload and tag @spotifyvoyager to share your musical personality! ✨');
+  const shareToInstagram = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'My Music DNA',
+        text: 'Check out my Music DNA from Spotify Voyager!',
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
+    }
   };
 
   if (loading) {
     return (
       <div className="card-loading">
         <div className="loading-container">
-          <div className="logo-icon pulse">🧬</div>
+          <div className="logo-icon pulse" style={{ 
+            fontSize: '4rem', 
+            marginBottom: 'var(--space-6)',
+            width: '80px',
+            height: '80px'
+          }}>🧬</div>
           <h2>Analyzing Your Music DNA...</h2>
-          <p>Extracting your musical genome...</p>
+          <p style={{ color: 'var(--color-text-secondary)' }}>
+            Decoding your musical genome
+          </p>
         </div>
       </div>
     );
   }
 
-  if (!analytics) {
+  if (error || !analytics) {
     return (
       <div className="card-error">
-        <h2>Music DNA Card not found</h2>
-        <p>This card may have expired or doesn't exist.</p>
+        <div style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
+          <div className="error-icon">!</div>
+          <h2 style={{ marginBottom: 'var(--space-4)' }}>Unable to Generate Music DNA</h2>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-6)' }}>
+            {error || 'Something went wrong while analyzing your music data.'}
+          </p>
+          <button onClick={() => router.push('/dashboard')} className="btn btn-primary">
+            Back to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
@@ -79,14 +108,14 @@ export default function MusicDNACard() {
   return (
     <div className="dna-card-page">
       <div className="card-controls">
-        <button onClick={downloadCard} className="btn btn-primary">
-          📱 Download for Stories
+        <button onClick={downloadCard} className="btn-social">
+          📥 Download Card
         </button>
-        <button onClick={shareOnTwitter} className="btn btn-social">
-          🐦 Share
+        <button onClick={shareToInstagram} className="btn-instagram">
+          📱 Share Story
         </button>
-        <button onClick={shareOnInstagram} className="btn btn-instagram">
-          📸 Instagram
+        <button onClick={() => router.push('/dashboard')} className="btn-social">
+          ← Back to Dashboard
         </button>
       </div>
 
@@ -99,44 +128,67 @@ export default function MusicDNACard() {
         <div className="dna-header">
           <div className="dna-logo">🧬</div>
           <h1>MUSIC DNA</h1>
-          <p className="dna-subtitle">Your Musical Genome</p>
+          <p className="dna-subtitle">Your Musical Genome Analysis</p>
         </div>
 
         <div className="dna-profile">
           <div className="profile-circle">
-            <span className="profile-initial">{analytics.profile?.display_name?.charAt(0) || 'M'}</span>
+            <span className="profile-initial">
+              {analytics.profile?.display_name?.charAt(0) || 'M'}
+            </span>
           </div>
-          <h2 className="profile-name">{analytics.profile?.display_name}</h2>
-          <div className="music-type">{analytics.insights?.musicMood?.mood || 'Balanced'} TYPE</div>
+          <h2 className="profile-name">{analytics.profile?.display_name || 'Music Lover'}</h2>
+          <div className="music-type">
+            {analytics.insights?.musicMood?.mood || 'Eclectic Explorer'}
+          </div>
         </div>
 
         <div className="dna-stats-grid">
           <div className="dna-stat">
             <div className="stat-icon">🎵</div>
-            <div className="stat-value">{analytics.insights.topGenres[0]?.genre || 'Various'}</div>
+            <div className="stat-value">
+              {analytics.insights?.topGenres?.[0]?.genre || 'Various'}
+            </div>
             <div className="stat-label">Primary Genre</div>
           </div>
           <div className="dna-stat">
             <div className="stat-icon">⚡</div>
-            <div className="stat-value">{Math.round(analytics.insights.discoveryScore)}</div>
+            <div className="stat-value">
+              {Math.round(analytics.insights?.discoveryScore || 75)}
+            </div>
             <div className="stat-label">Discovery Score</div>
           </div>
           <div className="dna-stat">
             <div className="stat-icon">🕰️</div>
-            <div className="stat-value">{Math.round(analytics.insights.vintageScore)}</div>
+            <div className="stat-value">
+              {Math.round(analytics.insights?.vintageScore || 60)}
+            </div>
             <div className="stat-label">Vintage Score</div>
           </div>
         </div>
 
         <div className="dna-sequence">
-          <h3>YOUR TOP GENES</h3>
+          <h3>YOUR TOP MUSICAL GENES</h3>
           <div className="gene-chain">
-            {analytics.topArtists.slice(0, 3).map((artist, index) => (
-              <div key={artist.id} className="gene-node">
-                <div className="gene-symbol">{artist.name.charAt(0)}</div>
-                <span className="gene-label">{artist.name}</span>
+            {analytics.topArtists?.slice(0, 3).map((artist, index) => (
+              <div key={artist.id || index} className="gene-node">
+                <div className="gene-symbol">{artist.name?.charAt(0) || '?'}</div>
+                <span className="gene-label">{artist.name || 'Artist'}</span>
               </div>
-            ))}
+            )) || [
+              <div key="1" className="gene-node">
+                <div className="gene-symbol">M</div>
+                <span className="gene-label">Music</span>
+              </div>,
+              <div key="2" className="gene-node">
+                <div className="gene-symbol">D</div>
+                <span className="gene-label">DNA</span>
+              </div>,
+              <div key="3" className="gene-node">
+                <div className="gene-symbol">V</div>
+                <span className="gene-label">Voyager</span>
+              </div>
+            ]}
           </div>
         </div>
 

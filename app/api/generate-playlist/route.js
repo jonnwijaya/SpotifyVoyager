@@ -9,7 +9,17 @@ const openai = new OpenAI({
 
 export async function POST(request) {
   try {
-    const { prompt, userId } = await request.json();
+    const body = await request.text();
+    let prompt, userId;
+
+    try {
+      const parsed = JSON.parse(body);
+      prompt = parsed.prompt;
+      userId = parsed.userId;
+    } catch (parseError) {
+      console.error('JSON parsing error:', parseError);
+      return NextResponse.json({ error: 'Invalid JSON data' }, { status: 400 });
+    }
 
     // Check if user has premium subscription
     const subscription = await checkSubscriptionStatus(userId);
