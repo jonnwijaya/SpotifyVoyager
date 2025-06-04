@@ -1,18 +1,23 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { isAuthenticated, spotifyFetch } from '@/lib/spotify';
+import { getUserAnalytics, generateReceiptData } from '@/lib/analytics';
+import { generatePersonalizedInsights } from '@/lib/aiService';
+import { checkSubscriptionStatus, SUBSCRIPTION_PLANS } from '@/lib/payments';
 import Image from 'next/image';
 
 export default function Dashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState(null);
-  const [topTracks, setTopTracks] = useState([]);
-  const [recentlyPlayed, setRecentlyPlayed] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [insights, setInsights] = useState(null);
+  const [subscription, setSubscription] = useState({ isPremium: false });
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -25,17 +30,17 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
 
-        // Load user profile
-        const userProfile = await spotifyFetch('/me');
-        setUserData(userProfile);
+        // Load user analytics
+        const analyticsData = await getUserAnalytics();
+        setAnalytics(analyticsData);
 
-        // Load top tracks
-        const tracksResponse = await spotifyFetch('/me/top/tracks?limit=10&time_range=short_term');
-        setTopTracks(tracksResponse.items || []);
+        // Check subscription status
+        const subStatus = await checkSubscriptionStatus(analyticsData.profile.id);
+        setSubscription(subStatus);
 
-        // Load recently played
-        const recentResponse = await spotifyFetch('/me/player/recently-played?limit=10');
-        setRecentlyPlayed(recentResponse.items || []);
+        // Generate AI insights
+        const aiInsights = await generatePersonalizedInsights(analyticsData, subStatus.isPremium);
+        setInsights(aiInsights);
 
       } catch (err) {
         console.error('Dashboard data loading error:', err);
@@ -52,6 +57,16 @@ export default function Dashboard() {
     localStorage.removeItem('spotifyAccessToken');
     localStorage.removeItem('tokenExpiration');
     router.push('/');
+  };
+
+  const generateReceipt = async () => {
+    try {
+      const receiptData = await generateReceiptData();
+      // Navigate to receipt page or download
+      router.push(`/receipt/${receiptData.receiptId}`);
+    } catch (error) {
+      console.error('Error generating receipt:', error);
+    }
   };
 
   const formatArtists = (artists) => {
@@ -71,8 +86,8 @@ export default function Dashboard() {
         <Header />
         <div className="loading-container">
           <div className="logo-icon pulse">SV</div>
-          <h2>Setting Up Your Dashboard</h2>
-          <p>Navigating through your musical cosmos...</p>
+          <h2>Analyzing Your Musical Universe</h2>
+          <p>Calculating your music DNA...</p>
           <div className="progress-bar-container">
             <div className="progress-bar-cosmic"></div>
           </div>
@@ -95,12 +110,6 @@ export default function Dashboard() {
               onClick={() => window.location.reload()}
               className="btn btn-danger"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 2v6h-6"></path>
-                <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
-                <path d="M3 22v-6h6"></path>
-                <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
-              </svg>
               Try Again
             </button>
           </div>
@@ -108,6 +117,8 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  if (!analytics) return null;
 
   return (
     <div className="dashboard-page">
@@ -118,9 +129,9 @@ export default function Dashboard() {
         <div className="card profile-card">
           <div className="user-profile-wrapper">
             <div className="profile-image-container">
-              {userData?.images?.[0]?.url ? (
+              {analytics.profile?.images?.[0]?.url ? (
                 <Image 
-                  src={userData.images[0].url} 
+                  src={analytics.profile.images[0].url} 
                   alt="Profile" 
                   width={100}
                   height={100}
@@ -128,148 +139,242 @@ export default function Dashboard() {
                 />
               ) : (
                 <div className="profile-image-placeholder">
-                  <span>{userData?.display_name?.charAt(0) || '?'}</span>
+                  <span>{analytics.profile?.display_name?.charAt(0) || '?'}</span>
                 </div>
               )}
             </div>
 
             <div className="profile-details">
-              <h1 className="profile-name">{userData?.display_name || 'Music Lover'}</h1>
-              <p className="profile-email">{userData?.email}</p>
+              <h1 className="profile-name">{analytics.profile?.display_name || 'Music Lover'}</h1>
+              <p className="profile-email">{analytics.profile?.email}</p>
 
               <div className="profile-stats">
-                <span className={`account-badge ${userData?.product === 'premium' ? 'premium' : 'free'}`}>
-                  {userData?.product === 'premium' ? 'Premium' : 'Free'} Account
+                <span className={`account-badge ${subscription.isPremium ? 'premium' : 'free'}`}>
+                  {subscription.isPremium ? 'Premium Member' : 'Free Account'}
                 </span>
-                {userData?.followers?.total > 0 && (
-                  <span className="followers-count">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    {userData.followers.total} followers
-                  </span>
-                )}
+                <span className="music-personality">
+                  🎵 {insights?.musicPersonality || 'Music Explorer'}
+                </span>
               </div>
 
-              <button
-                onClick={handleLogout}
-                className="btn btn-outline"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                  <polyline points="16 17 21 12 16 7"></polyline>
-                  <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg>
-                Logout
-              </button>
+              <div className="profile-actions">
+                <button onClick={generateReceipt} className="btn btn-primary">
+                  Generate Music Receipt
+                </button>
+                {!subscription.isPremium && (
+                  <button 
+                    onClick={() => router.push('/pricing')}
+                    className="btn btn-premium"
+                  >
+                    Upgrade to Premium
+                  </button>
+                )}
+                <button onClick={handleLogout} className="btn btn-outline">
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Top Tracks Card */}
-        <div className="card">
-          <div className="card-header">
-            <h2>Your Top Tracks</h2>
-            <span className="card-subheader">Based on your recent listening</span>
-          </div>
-          <div className="card-content">
-            {topTracks.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">🎵</div>
-                <p>No top tracks found. Start listening to build your preferences!</p>
-              </div>
-            ) : (
-              <div className="tracks-grid">
-                {topTracks.map((track) => (
-                  <div 
-                    key={track.id} 
-                    className="track-item" 
-                    onClick={() => openTrack(track.external_urls?.spotify)}
-                  >
-                    <div className="track-art-container">
-                      <Image 
-                        src={track.album?.images?.[1]?.url || track.album?.images?.[0]?.url || '/placeholder-album.png'} 
-                        alt={track.album?.name || 'Album'}
-                        width={60}
-                        height={60}
-                        className="track-art"
-                      />
-                      <div className="play-overlay">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="play-icon">
-                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="track-details">
-                      <h3 className="track-title">{track.name}</h3>
-                      <p className="track-artist">{formatArtists(track.artists)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* Navigation Tabs */}
+        <div className="dashboard-tabs">
+          <button 
+            className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button 
+            className={`tab ${activeTab === 'tracks' ? 'active' : ''}`}
+            onClick={() => setActiveTab('tracks')}
+          >
+            Top Tracks
+          </button>
+          <button 
+            className={`tab ${activeTab === 'artists' ? 'active' : ''}`}
+            onClick={() => setActiveTab('artists')}
+          >
+            Top Artists
+          </button>
+          <button 
+            className={`tab ${activeTab === 'insights' ? 'active' : ''}`}
+            onClick={() => setActiveTab('insights')}
+          >
+            AI Insights
+          </button>
         </div>
 
-        {/* Recently Played Card */}
-        <div className="card">
-          <div className="card-header">
-            <h2>Recently Played</h2>
-            <span className="card-subheader">Your music journey</span>
-          </div>
-          <div className="card-content">
-            {recentlyPlayed.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">🎧</div>
-                <p>No recently played tracks found.</p>
+        {/* Tab Content */}
+        {activeTab === 'overview' && (
+          <div className="tab-content">
+            {/* Stats Grid */}
+            <div className="stats-grid">
+              <div className="stat-card">
+                <h3>Listening Time</h3>
+                <div className="stat-value">{analytics.insights.listeningTime.formatted}</div>
+                <p>From your top 50 tracks</p>
               </div>
-            ) : (
-              <div className="recent-tracks-timeline">
-                {recentlyPlayed.map((item, index) => (
-                  <div 
-                    key={`${item.track?.id}-${item.played_at}-${index}`} 
-                    className="recent-track-item"
-                    onClick={() => openTrack(item.track?.external_urls?.spotify)}
-                  >
-                    <div className="timeline-connector">
-                      <div className="timeline-dot"></div>
-                      {index < recentlyPlayed.length - 1 && <div className="timeline-line"></div>}
+              <div className="stat-card">
+                <h3>Music Mood</h3>
+                <div className="stat-value">{analytics.insights.musicMood?.mood || 'Balanced'}</div>
+                <p>Your overall vibe</p>
+              </div>
+              <div className="stat-card">
+                <h3>Discovery Score</h3>
+                <div className="stat-value">{Math.round(analytics.insights.discoveryScore)}/100</div>
+                <p>How underground your taste is</p>
+              </div>
+              <div className="stat-card">
+                <h3>Vintage Score</h3>
+                <div className="stat-value">{Math.round(analytics.insights.vintageScore)}/100</div>
+                <p>How classic your taste is</p>
+              </div>
+            </div>
+
+            {/* Top Genres */}
+            <div className="card">
+              <div className="card-header">
+                <h2>Your Top Genres</h2>
+              </div>
+              <div className="card-content">
+                <div className="genres-grid">
+                  {analytics.insights.topGenres.slice(0, 8).map((genre, index) => (
+                    <div key={genre.genre} className="genre-item">
+                      <span className="genre-rank">#{index + 1}</span>
+                      <span className="genre-name">{genre.genre}</span>
+                      <span className="genre-count">{genre.count} artists</span>
                     </div>
-                    <div className="recent-track-content">
-                      <div className="recent-track-art">
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'tracks' && (
+          <div className="tab-content">
+            <div className="card">
+              <div className="card-header">
+                <h2>Your Top Tracks</h2>
+                <span className="card-subheader">Your most played songs</span>
+              </div>
+              <div className="card-content">
+                <div className="tracks-list">
+                  {analytics.topTracks.map((track, index) => (
+                    <div key={track.id} className="track-item-detailed" onClick={() => openTrack(track.external_urls?.spotify)}>
+                      <span className="track-rank">#{index + 1}</span>
+                      <div className="track-art-container">
                         <Image 
-                          src={item.track?.album?.images?.[2]?.url || item.track?.album?.images?.[0]?.url || '/placeholder-album.png'} 
-                          alt={item.track?.album?.name || 'Album'}
+                          src={track.album?.images?.[2]?.url || '/placeholder-album.png'} 
+                          alt={track.album?.name || 'Album'}
                           width={50}
                           height={50}
                           className="track-art"
                         />
                       </div>
-                      <div className="recent-track-details">
-                        <h3 className="track-title">{item.track?.name}</h3>
-                        <p className="track-artist">{formatArtists(item.track?.artists)}</p>
-                        <span className="track-timestamp">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                          </svg>
-                          {new Date(item.played_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </span>
+                      <div className="track-details">
+                        <h3 className="track-title">{track.name}</h3>
+                        <p className="track-artist">{formatArtists(track.artists)}</p>
+                        <p className="track-album">{track.album?.name}</p>
+                      </div>
+                      <div className="track-popularity">
+                        <span className="popularity-score">{track.popularity}/100</span>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'artists' && (
+          <div className="tab-content">
+            <div className="card">
+              <div className="card-header">
+                <h2>Your Top Artists</h2>
+                <span className="card-subheader">Your musical heroes</span>
+              </div>
+              <div className="card-content">
+                <div className="artists-grid">
+                  {analytics.topArtists.map((artist, index) => (
+                    <div key={artist.id} className="artist-item" onClick={() => window.open(artist.external_urls?.spotify, '_blank')}>
+                      <span className="artist-rank">#{index + 1}</span>
+                      <div className="artist-image-container">
+                        <Image 
+                          src={artist.images?.[1]?.url || artist.images?.[0]?.url || '/placeholder-album.png'} 
+                          alt={artist.name}
+                          width={80}
+                          height={80}
+                          className="artist-image"
+                        />
+                      </div>
+                      <h3 className="artist-name">{artist.name}</h3>
+                      <p className="artist-genres">{artist.genres?.slice(0, 2).join(', ')}</p>
+                      <span className="artist-popularity">{artist.popularity}/100 popularity</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'insights' && (
+          <div className="tab-content">
+            <div className="card">
+              <div className="card-header">
+                <h2>AI-Powered Insights</h2>
+                {!subscription.isPremium && (
+                  <span className="premium-badge">Upgrade for advanced insights</span>
+                )}
+              </div>
+              <div className="card-content">
+                <div className="insights-container">
+                  <h3>{insights?.musicPersonality}</h3>
+                  <div className="insights-list">
+                    {insights?.insights?.map((insight, index) => (
+                      <div key={index} className="insight-item">
+                        <span className="insight-icon">💡</span>
+                        <p>{insight}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                  <div className="recommendations-list">
+                    <h4>Recommendations</h4>
+                    {insights?.recommendations?.map((rec, index) => (
+                      <div key={index} className="recommendation-item">
+                        <span className="rec-icon">🎯</span>
+                        <p>{rec}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {subscription.isPremium && (
+              <div className="card">
+                <div className="card-header">
+                  <h2>AI Playlist Generator</h2>
+                </div>
+                <div className="card-content">
+                  <div className="playlist-generator">
+                    <textarea 
+                      placeholder="Describe the type of playlist you want... (e.g., 'upbeat songs for working out', 'chill music for studying')"
+                      className="playlist-prompt"
+                      rows={3}
+                    />
+                    <button className="btn btn-primary">
+                      Generate Playlist with AI
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      <div className="dashboard-footer">
-        <p>Spotify Voyager • Exploring Your Musical Universe</p>
+        )}
       </div>
     </div>
   );
