@@ -4,14 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { isAuthenticated, spotifyFetch } from '@/lib/spotify';
-import { getUserAnalytics, generateReceiptData } from '@/lib/analytics';
+import { getUserAnalytics } from '@/lib/analytics';
 import { generatePersonalizedInsights } from '@/lib/aiService';
 import { checkSubscriptionStatus, SUBSCRIPTION_PLANS } from '@/lib/payments';
 import Image from 'next/image';
 
 export default function Dashboard() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState('overview');
   const [analytics, setAnalytics] = useState(null);
+  const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [subscription, setSubscription] = useState({ isPremium: false });
@@ -29,16 +31,29 @@ export default function Dashboard() {
         setError(null);
 
         // Load user analytics
-        const analyticsData = await getUserAnalytics();
-        setAnalytics(analyticsData);
+        try {
+          const data = await getUserAnalytics();
+          setAnalytics(data);
 
-        // Check subscription status
-        const subStatus = await checkSubscriptionStatus(analyticsData.profile.id);
-        setSubscription(subStatus);
-
-        // Generate AI insights
-        const aiInsights = await generatePersonalizedInsights(analyticsData, subStatus.isPremium);
-        setInsights(aiInsights);
+          // Generate AI insights
+          try {
+            const aiInsights = await generatePersonalizedInsights(data, subscription.isPremium);
+            setInsights(aiInsights);
+          } catch (insightsError) {
+            console.error('Failed to generate insights:', insightsError);
+            // Set basic insights as fallback
+            setInsights({
+              musicPersonality: 'Music Explorer',
+              insights: ['Analyzing your music taste...'],
+              recommendations: ['Keep exploring new music!']
+            });
+          }
+        } catch (err) {
+          console.error('Dashboard error:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
 
       } catch (err) {
         console.error('Dashboard data loading error:', err);
@@ -49,7 +64,7 @@ export default function Dashboard() {
     }
 
     loadDashboardData();
-  }, [router]);
+  }, [router, subscription.isPremium]);
 
   const handleLogout = () => {
     localStorage.removeItem('spotifyAccessToken');
