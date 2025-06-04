@@ -1,4 +1,4 @@
-// app/page.js
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -20,16 +20,15 @@ export default function Home() {
       router.push('/dashboard');
     }
     
-    // Add animation classes to elements
-    const heroElements = document.querySelectorAll('.animated');
-    heroElements.forEach((element, index) => {
+    // Add staggered animation to elements
+    const animatedElements = document.querySelectorAll('.animated');
+    animatedElements.forEach((element, index) => {
       setTimeout(() => {
         element.classList.add('fade-in');
-      }, index * 150);
+      }, index * 200);
     });
   }, [router]);
 
-  // Handle Spotify login
   const handleLogin = () => {
     window.location.href = getSpotifyLoginUrl();
   };
@@ -45,55 +44,85 @@ export default function Home() {
             <p className="animated">
               Discover and manage your music experience effortlessly. Track your favorite songs, 
               explore new features, and engage with the Spotify community—all in a sleek, 
-              user-friendly interface.
+              user-friendly interface designed for music lovers.
             </p>
-            <div className="hero-actions">
+            <div className="hero-actions animated">
               <button 
                 onClick={handleLogin} 
-                className="btn btn-primary btn-lg animated"
+                className="btn btn-primary btn-lg"
               >
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  width="24" 
-                  height="24" 
+                  width="20" 
+                  height="20" 
                   viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  className="btn-icon"
+                  fill="currentColor"
                 >
-                  <path d="M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2ZM2 12h20"/>
-                  <path d="M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10A10 10 0 0 1 2 12A10 10 0 0 1 12 2ZM2 12h20"/>
-                  <path d="m9 12 3 3 3-3"/>
-                  <path d="M12 9v6"/>
+                  <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.563.387-.857.207-2.35-1.434-5.305-1.76-8.786-.963-.335.077-.67-.133-.746-.469-.077-.336.132-.67.469-.746 3.809-.871 7.077-.496 9.713 1.115.293.18.385.563.207.856zm1.223-2.723c-.226.367-.706.482-1.073.257-2.687-1.652-6.785-2.131-9.965-1.166-.422.127-.869-.106-.995-.529-.127-.422.106-.869.529-.995 3.632-1.102 8.147-.568 11.248 1.339.367.226.482.706.256 1.094zm.105-2.835C14.692 8.95 9.375 8.775 6.297 9.71c-.51.155-1.048-.133-1.202-.644-.155-.51.133-1.048.644-1.202 3.635-1.102 9.405-.865 12.992 1.454.44.284.570.877.285 1.317-.285.44-.877.57-1.317.285z"/>
                 </svg>
                 Connect with Spotify
               </button>
-              <a href="#features" className="btn btn-outline btn-lg animated">
-                Learn more
+              <a href="#features" className="btn btn-outline btn-lg">
+                Learn More
               </a>
             </div>
           </div>
         </div>
       </section>
       
-      {/* Features section placeholder */}
       <section id="features" className="features-section">
         <div className="container">
           <h2 className="text-center">Discover the Experience</h2>
           <div className="features-grid">
-            {/* Feature cards would go here */}
+            <div className="card">
+              <div className="card-content">
+                <div style={{ fontSize: 'var(--font-size-4xl)', marginBottom: 'var(--space-lg)', textAlign: 'center' }}>🎵</div>
+                <h3 style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>Track Your Music</h3>
+                <p style={{ textAlign: 'center', color: 'var(--color-gray-600)' }}>
+                  Keep track of your favorite songs and discover your music patterns with detailed analytics.
+                </p>
+              </div>
+            </div>
+            
+            <div className="card">
+              <div className="card-content">
+                <div style={{ fontSize: 'var(--font-size-4xl)', marginBottom: 'var(--space-lg)', textAlign: 'center' }}>📊</div>
+                <h3 style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>Music Analytics</h3>
+                <p style={{ textAlign: 'center', color: 'var(--color-gray-600)' }}>
+                  Get insights into your listening habits with beautiful charts and statistics.
+                </p>
+              </div>
+            </div>
+            
+            <div className="card">
+              <div className="card-content">
+                <div style={{ fontSize: 'var(--font-size-4xl)', marginBottom: 'var(--space-lg)', textAlign: 'center' }}>🚀</div>
+                <h3 style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>Space-Age Design</h3>
+                <p style={{ textAlign: 'center', color: 'var(--color-gray-600)' }}>
+                  Experience your music through a beautifully designed, cosmic-themed interface.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
       
-      {/* About section placeholder */}
       <section id="about" className="about-section">
         <div className="container">
-          <h2 className="text-center">About Spotify Voyager</h2>
-          {/* About content would go here */}
+          <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+            <h2>About Spotify Voyager</h2>
+            <p style={{ fontSize: 'var(--font-size-lg)', color: 'var(--color-gray-600)', lineHeight: '1.8' }}>
+              Spotify Voyager is your personal music companion that transforms your Spotify experience 
+              into an interstellar journey. Connect your account to explore your musical universe, 
+              discover patterns in your listening habits, and navigate through your favorite tracks 
+              with our space-themed interface.
+            </p>
+            <div style={{ marginTop: 'var(--space-2xl)' }}>
+              <button onClick={handleLogin} className="btn btn-primary btn-lg">
+                Start Your Journey
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
