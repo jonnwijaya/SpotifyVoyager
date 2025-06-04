@@ -159,7 +159,7 @@ export default function Dashboard() {
 
               <div className="profile-actions">
                 <button onClick={generateReceipt} className="btn btn-primary">
-                  Generate Music Receipt
+                  Generate Music DNA Card
                 </button>
                 {!subscription.isPremium && (
                   <button 

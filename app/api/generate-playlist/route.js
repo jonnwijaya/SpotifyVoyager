@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { getUserAnalytics } from '@/lib/analytics';
 import { checkSubscriptionStatus } from '@/lib/payments';
@@ -14,7 +13,7 @@ export async function POST(request) {
 
     // Check if user has premium subscription
     const subscription = await checkSubscriptionStatus(userId);
-    
+
     if (!subscription.isPremium) {
       return NextResponse.json({ 
         error: 'Premium subscription required for AI playlist generation' 
@@ -23,7 +22,7 @@ export async function POST(request) {
 
     // Get user analytics
     const analytics = await getUserAnalytics();
-    
+
     // Generate playlist with AI
     const systemPrompt = `You are a music expert AI that creates Spotify playlists based on user listening data and preferences. 
 

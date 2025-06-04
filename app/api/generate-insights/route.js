@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
@@ -8,7 +7,33 @@ const openai = new OpenAI({
 
 export async function POST(request) {
   try {
-    const { userAnalytics, isPremium } = await request.json();
+    const contentType = request.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return NextResponse.json(
+        { error: 'Content-Type must be application/json' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.text();
+    if (!body) {
+      return NextResponse.json(
+        { error: 'Request body is empty' },
+        { status: 400 }
+      );
+    }
+
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (parseError) {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+
+    const { userAnalytics, isPremium } = data;
 
     if (!isPremium) {
       return NextResponse.json(generateBasicInsights(userAnalytics));
@@ -57,7 +82,7 @@ Provide insights in this JSON format:
 const generateBasicInsights = (userAnalytics) => {
   const topGenre = userAnalytics.insights.topGenres[0]?.genre || 'Unknown';
   const mood = userAnalytics.insights.musicMood?.mood || 'Balanced';
-  
+
   return {
     musicPersonality: `The ${topGenre} ${mood} Listener`,
     insights: [

@@ -95,8 +95,8 @@ export default function Pricing() {
               <p>Yes! You can cancel your subscription at any time. You'll continue to have access to premium features until the end of your billing period.</p>
             </div>
             <div className="faq-item">
-              <h3>How does the music receipt work?</h3>
-              <p>We generate a shareable, downloadable receipt-style summary of your music taste that you can share on social media platforms.</p>
+              <h3>How does the Music DNA Card work?</h3>
+              <p>We generate a beautiful, shareable Music DNA Card that analyzes your musical genome - perfect for Instagram Stories and social media sharing!</p>
             </div>
           </div>
         </div>
